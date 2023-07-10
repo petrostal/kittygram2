@@ -27,12 +27,26 @@ class CatSerializer(serializers.ModelSerializer):
     achievements = AchievementSerializer(many=True, required=False)
     color = serializers.ChoiceField(choices=CHOICES)
     age = serializers.SerializerMethodField()
+    owner = serializers.PrimaryKeyRelatedField(
+        read_only=True, default=serializers.CurrentUserDefault())
+    # можно ещё так:
+    # owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    # но тогда мы не увидим в GET это поле.
 
     class Meta:
         model = Cat
         fields = ('id', 'name', 'color', 'birth_year', 'achievements', 'owner',
                   'age')
-        read_only_fields = ('owner',)
+        # read_only_fields = ('owner',) - переопределили выше.
+        # Важно: класс UniqueTogetherValidator всегда накладывает неявное
+        # ограничение: все поля сериализатора, к которым применён этот
+        # валидатор, обрабатываются как обязательные.
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Cat.objects.all(),
+                fields=('name', 'owner')
+            )
+        ]
 
     def validate_birth_year(self, value):
         year = dt.date.today().year

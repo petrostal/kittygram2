@@ -28,6 +28,7 @@ class Cat(models.Model):
     achievements = models.ManyToManyField(Achievement, through='AchievementCat')
 
     class Meta:
+        # проверка на уникальность связки name + owner
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'owner'],
